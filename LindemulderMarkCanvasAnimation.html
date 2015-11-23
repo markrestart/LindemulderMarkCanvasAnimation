@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+ <title>Particle System</title>
+ <meta charset="utf-8">
+ <style>
+canvas {
+ border: 1px solid black;;
+}
+</style>
+ <script>
+ var startX;
+ var startY;
+ var canvas;
+ var context;
+ var particles;
+ var timer;
+ var timerRestart;
+ function makeParticles(x,y) {
+	//create an array of particles for our animation
+	particles = [];
+	for(var i = 0; i < 30; i++)
+	{
+		particles.push(new Particle(x,y));
+	}
+ }
+ function degreesToRadians(degrees) {
+	 //converts from degrees to radians and returns
+	 return (degrees * Math.PI)/180;
+ }
+ function Particle(x,y)
+ {
+	 //the constructor for a single particle, with random starting x+y, velocity, color, and radius
+	 //this.x = Math.random()*canvas.width;
+	 //this.y = Math.random()*canvas.height;
+	 this.x = startX;
+	 this.y = startY;
+	 this.vx = ((startX-x)*(-1))/10;
+	 this.vy = ((startY-y)*(-1))/10;
+	 var colors = ["darkred","crimson","maroon","red","red","red","orangered","darkorange","yellow"];
+	 this.color = colors[Math.floor(Math.random()*colors.length)];
+	 this.radius = 25;
+	 this.shape = Math.floor(Math.random()*5);
+ }
+ 
+ function getStartPosition(event) {
+	var x = event.x;
+	var y = event.y;
+
+	var canvas = document.getElementById("canvas");
+
+	x -= canvas.offsetLeft;
+	y -= canvas.offsetTop;
+
+	startX = x;
+	startY = y;
+	
+//	makeParticles(x,y);
+}
+
+ function getEndPosition(event) {
+	var x = event.x;
+	var y = event.y;
+
+	var canvas = document.getElementById("canvas");
+
+	x -= canvas.offsetLeft;
+	y -= canvas.offsetTop;
+	
+	makeParticles(x,y);
+}
+ 
+ function moveParticles() {
+	 //partially clear the screen to fade previous circles, and draw a new particle at each new coordinate
+	 context.font = "100px Arial";
+	context.fillText("Fireworks!",10,500-((particles[0].radius)*10));
+	 
+	 
+	 context.globalCompositeOperation = "darken";
+	 context.fillStyle = "rgba(0, 0, 0, 0.3)";
+	 context.fillRect(0, 0, canvas.width, canvas.height);
+	 context.globalCompositeOperation = "source-atop";
+	 for(var i = 0; i < particles.length; i++)
+	 {
+		 var p = particles[i];
+		 
+		 if (p.shape == 1) {
+			makeCircle(p.x, p.y, p.radius, p.color);
+		 } else if (p.shape == 2) {
+			makeShapeTwo(p.x, p.y, p.radius, p.color);
+		} else if (p.shape == 3) {
+			makeShapeThree(p.x, p.y, p.radius, p.color);
+		 } else if (p.shape == 4) {
+			makeShapeFour(p.x, p.y, p.radius, p.color);
+		 } else {
+			makeShapeFive(p.x, p.y, p.radius, p.color);
+		 }
+		 
+		 var plusOrMinus = Math.random();
+		 if(plusOrMinus < .5) {
+			p.x += p.vx+(Math.random()*(10)*(-1));
+			p.y += p.vy+(Math.random()*(10)*(-1));
+		 } else {
+			p.x += p.vx+(Math.random()*10);
+			p.y += p.vy+(Math.random()*10);
+		 }
+		 if(p.x < -50) p.x = canvas.width+50;
+		 if(p.y < -50) p.y = canvas.height+50;
+		 if(p.x > canvas.width+50) p.x = -50;
+		 if(p.y > canvas.height+50) p.y = -50;
+		 p.radius -= 1;
+		 if(p.radius < 1) {
+			particles.splice(i, 1);
+		 }
+	 }
+ }
+ 
+ function makeCircle(x, y, r, c) {
+		context.beginPath();
+		context.arc(x, y, r, 0, degreesToRadians(360), true);
+		context.fillStyle = c;
+		context.fill();
+		console.log("circle");
+ }
+ 
+  function makeShapeTwo(x, y, r, c) {
+		context.beginPath();
+		context.rect(x, y, r, r);
+		context.fillStyle = c;
+		context.fill();
+		console.log("square");
+ }
+ 
+  function makeShapeThree(x, y, r, c) {
+		context.beginPath();
+		context.moveTo((x+(r/2)), (y));
+		context.lineTo((x+r), (y+r));
+		context.lineTo((x), (y+r));
+		context.lineTo((x-r), (y-r));
+		context.lineTo((x-(r/2)), (y));
+		context.lineTo((x-r), (y-r));
+		context.lineTo((x), (y-(r/2)));
+		context.lineTo((x+r), (y-r));
+		context.lineTo((x+(r/2)), (y));
+		context.fillStyle = c;
+		context.fill();
+		console.log("star");
+ }
+ 
+  function makeShapeFour(x, y, r, c) {
+		context.beginPath();
+		context.arc(x, y, r, 0, degreesToRadians(180), true);
+		context.fillStyle = c;
+		context.fill();
+		console.log("Semicircle");
+ }
+ 
+  function makeShapeFive(x, y, r, c) {
+		context.beginPath();
+		context.moveTo((x+r), (y));
+		context.lineTo((x-(r/2)), (y+(r/2)));
+		context.lineTo((x+(r/2)), (y-(r/2)));
+		context.fillStyle = c;
+		context.fill();
+		console.log("triangle");
+ }
+ 
+ function clearScreen(color) {
+	 //clears the screen and fills with the color of choice
+	 context.clearRect(0, 0, canvas.width, canvas.height);
+	 context.fillStyle = color;
+	 context.fillRect(0, 0, canvas.width, canvas.height);
+ }
+ window.onload = function() {
+ 	 canvas = document.getElementById('canvas');
+	 context = canvas.getContext('2d');
+	 makeParticles();
+	 timer = setInterval(moveParticles, 100);
+//	 timerRestart = setInterval(makeParticles, 2000);
+	 canvas.addEventListener("mousedown", getStartPosition, false);
+	 canvas.addEventListener("mouseup", getEndPosition, false);
+ }
+</script>
+</head>
+<body>
+	<canvas id="canvas" width="500" height="400"></canvas>
+	Click, drag, and release to shoot fire.
+</body>
+</html>
