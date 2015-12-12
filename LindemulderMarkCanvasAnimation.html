@@ -4,22 +4,28 @@
  <title>Particle System</title>
  <meta charset="utf-8">
  <style>
+ body {
+    background-color: black;
+}
 canvas {
- border: 1px solid black;;
+ border: 10px solid grey;
+ display: block;
+ margin-left: auto;
+ margin-right: auto
 }
 </style>
  <script>
+ var playerX = 550;
  var startX;
  var startY;
  var canvas;
  var context;
- var particles;
+ var particles = [];
  var timer;
  var timerRestart;
  function makeParticles(x,y) {
 	//create an array of particles for our animation
-	particles = [];
-	for(var i = 0; i < 30; i++)
+	for(var i = 0; i < 1; i++)
 	{
 		particles.push(new Particle(x,y));
 	}
@@ -31,8 +37,6 @@ canvas {
  function Particle(x,y)
  {
 	 //the constructor for a single particle, with random starting x+y, velocity, color, and radius
-	 //this.x = Math.random()*canvas.width;
-	 //this.y = Math.random()*canvas.height;
 	 this.x = startX;
 	 this.y = startY;
 	 this.vx = ((startX-x)*(-1))/10;
@@ -54,8 +58,7 @@ canvas {
 
 	startX = x;
 	startY = y;
-	
-//	makeParticles(x,y);
+
 }
 
  function getEndPosition(event) {
@@ -73,46 +76,68 @@ canvas {
  function moveParticles() {
 	 //partially clear the screen to fade previous circles, and draw a new particle at each new coordinate
 	 context.font = "100px Arial";
-	context.fillText("Fireworks!",10,500-((particles[0].radius)*10));
 	 
 	 
-	 context.globalCompositeOperation = "darken";
-	 context.fillStyle = "rgba(0, 0, 0, 0.3)";
+	 context.globalCompositeOperation = "hard-light";
+	 context.fillStyle = "rgba(0, 0, 0, 1)";
 	 context.fillRect(0, 0, canvas.width, canvas.height);
 	 context.globalCompositeOperation = "source-atop";
 	 for(var i = 0; i < particles.length; i++)
 	 {
 		 var p = particles[i];
 		 
-		 if (p.shape == 1) {
 			makeCircle(p.x, p.y, p.radius, p.color);
-		 } else if (p.shape == 2) {
-			makeShapeTwo(p.x, p.y, p.radius, p.color);
-		} else if (p.shape == 3) {
-			makeShapeThree(p.x, p.y, p.radius, p.color);
-		 } else if (p.shape == 4) {
-			makeShapeFour(p.x, p.y, p.radius, p.color);
-		 } else {
-			makeShapeFive(p.x, p.y, p.radius, p.color);
-		 }
+	 
+			p.x += p.vx;
+			p.y += p.vy;
 		 
-		 var plusOrMinus = Math.random();
-		 if(plusOrMinus < .5) {
-			p.x += p.vx+(Math.random()*(10)*(-1));
-			p.y += p.vy+(Math.random()*(10)*(-1));
-		 } else {
-			p.x += p.vx+(Math.random()*10);
-			p.y += p.vy+(Math.random()*10);
-		 }
+		 
+		 //bounce
+		if (p.x + p.vx > canvas.width || p.x + p.vx < 0)
+		p.vx = -p.vx;
+
+		if (p.y + p.vy > canvas.height-25 || p.y + p.vy < 0)
+		p.vy = -p.vy;
+		
+
+		if (p.x + p.vx > playerX && p.x + p.vx < playerX && p.y + p.vy == canvas.height - 75) {
+			p.vy = -p.vy;
+			console.log("hit");
+		}
+
+		 //Air friction
+		 if(p.vx > 0) p.vx = p.vx - .05;
+		 if(p.vx < 0) p.vx = p.vx + .05;
+		 if(p.vy > 0) p.vy = p.vy - .05;
+		 if(p.vy < 0) p.vy = p.vy + .05;
+		 
+		 
+		 
+		 //gravity/floor Click
+		 if(p.vy < 50) p.vy++;
+		 if(p.y > canvas.height-25) {
+			p.y=canvas.height-25;
+			if(p.vx > 0) p.vx = p.vx - 1.5;
+			if(p.vx < 0) p.vx = p.vx + 1.5;
+}		 
+		 //wrap around (shoudln't trigger)
 		 if(p.x < -50) p.x = canvas.width+50;
 		 if(p.y < -50) p.y = canvas.height+50;
 		 if(p.x > canvas.width+50) p.x = -50;
 		 if(p.y > canvas.height+50) p.y = -50;
-		 p.radius -= 1;
-		 if(p.radius < 1) {
-			particles.splice(i, 1);
-		 }
+		 
+		 
+		 if(p.radius < 1) particles.splice(i, 1);
 	 }
+	 makeShapeTwo(playerX, canvas.height-50, 100, 30, 'Blue');
+	 
+	if (keys.left) {
+		playerX = PlayerX - 10;
+    }
+	if (keys.right) {
+		playerX = PlayerX + 10;
+    }
+	 
  }
  
  function makeCircle(x, y, r, c) {
@@ -123,47 +148,36 @@ canvas {
 		console.log("circle");
  }
  
-  function makeShapeTwo(x, y, r, c) {
+  function makeShapeTwo(x, y, r, r2, c) {
 		context.beginPath();
-		context.rect(x, y, r, r);
+		context.rect(x, y, r, r2);
 		context.fillStyle = c;
 		context.fill();
 		console.log("square");
  }
  
-  function makeShapeThree(x, y, r, c) {
-		context.beginPath();
-		context.moveTo((x+(r/2)), (y));
-		context.lineTo((x+r), (y+r));
-		context.lineTo((x), (y+r));
-		context.lineTo((x-r), (y-r));
-		context.lineTo((x-(r/2)), (y));
-		context.lineTo((x-r), (y-r));
-		context.lineTo((x), (y-(r/2)));
-		context.lineTo((x+r), (y-r));
-		context.lineTo((x+(r/2)), (y));
-		context.fillStyle = c;
-		context.fill();
-		console.log("star");
- }
- 
-  function makeShapeFour(x, y, r, c) {
-		context.beginPath();
-		context.arc(x, y, r, 0, degreesToRadians(180), true);
-		context.fillStyle = c;
-		context.fill();
-		console.log("Semicircle");
- }
- 
-  function makeShapeFive(x, y, r, c) {
-		context.beginPath();
-		context.moveTo((x+r), (y));
-		context.lineTo((x-(r/2)), (y+(r/2)));
-		context.lineTo((x+(r/2)), (y-(r/2)));
-		context.fillStyle = c;
-		context.fill();
-		console.log("triangle");
- }
+ function trackKeys(codes) {
+  var pressed = Object.create(null);
+
+  // alters the current "pressed" array which is returned from this function. 
+  // The "pressed" variable persists even after this function terminates
+  // That is why we needed to assign it using "Object.create()" as 
+  // otherwise it would be garbage collected
+
+  function handler(event) {
+    if (codes.hasOwnProperty(event.keyCode)) {
+      // If the event is keydown, set down to true. Else set to false.
+      var down = event.type == "keydown";
+      pressed[codes[event.keyCode]] = down;
+      // We don't want the key press to scroll the browser window, 
+      // This stops the event from continuing to be processed
+      event.preventDefault();
+    }
+  }
+  addEventListener("keydown", handler);
+  addEventListener("keyup", handler);
+  return pressed;
+}
  
  function clearScreen(color) {
 	 //clears the screen and fills with the color of choice
@@ -175,15 +189,14 @@ canvas {
  	 canvas = document.getElementById('canvas');
 	 context = canvas.getContext('2d');
 	 makeParticles();
-	 timer = setInterval(moveParticles, 100);
-//	 timerRestart = setInterval(makeParticles, 2000);
+	 timer = setInterval(moveParticles, 32);
 	 canvas.addEventListener("mousedown", getStartPosition, false);
 	 canvas.addEventListener("mouseup", getEndPosition, false);
  }
 </script>
 </head>
 <body>
-	<canvas id="canvas" width="500" height="400"></canvas>
+	<canvas id="canvas" width="1200" height="700"></canvas>
 	Click, drag, and release to shoot fire.
 </body>
 </html>
