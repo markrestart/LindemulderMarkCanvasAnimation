@@ -6,6 +6,8 @@
  <style>
  body {
     background-color: black;
+	color: grey;
+	text-align: center;
 }
 canvas {
  border: 10px solid grey;
@@ -15,9 +17,12 @@ canvas {
 }
 </style>
  <script>
+ var mouseIsDown = false;
  var playerX = 550;
  var startX;
  var startY;
+ var midX;
+ var midY;
  var canvas;
  var context;
  var particles = [];
@@ -41,13 +46,13 @@ canvas {
 	 this.y = startY;
 	 this.vx = ((startX-x)*(-1))/10;
 	 this.vy = ((startY-y)*(-1))/10;
-	 var colors = ["darkred","crimson","maroon","red","red","red","orangered","darkorange","yellow"];
-	 this.color = colors[Math.floor(Math.random()*colors.length)];
+	 this.color = document.getElementById("ballColor").value;
 	 this.radius = 25;
 	 this.shape = Math.floor(Math.random()*5);
  }
  
  function getStartPosition(event) {
+	mouseIsDown = true;
 	var x = event.x;
 	var y = event.y;
 
@@ -61,7 +66,21 @@ canvas {
 
 }
 
+ function getMidPosition(event) {
+	var x = event.x;
+	var y = event.y;
+
+	var canvas = document.getElementById("canvas");
+
+	x -= canvas.offsetLeft;
+	y -= canvas.offsetTop;
+	
+	midX = x;
+	midY = y;
+}
+
  function getEndPosition(event) {
+ 	mouseIsDown = false;
 	var x = event.x;
 	var y = event.y;
 
@@ -129,15 +148,17 @@ canvas {
 		 
 		 if(p.radius < 1) particles.splice(i, 1);
 	 }
-	 makeShapeTwo(playerX, canvas.height-50, 100, 30, 'Blue');
-	 
-	if (keys.left) {
-		playerX = PlayerX - 10;
-    }
-	if (keys.right) {
-		playerX = PlayerX + 10;
-    }
-	 
+	 console.log(mouseIsDown);
+	 //mouseLine
+	 if(mouseIsDown == true) {
+		console.log("Draw Line");
+		context.beginPath();
+		context.moveTo(startX,startY);
+		context.lineTo(midX,midY);
+		context.strokeStyle = "grey";
+		context.lineWidth = 4;
+		context.stroke();
+	 }
  }
  
  function makeCircle(x, y, r, c) {
@@ -145,40 +166,8 @@ canvas {
 		context.arc(x, y, r, 0, degreesToRadians(360), true);
 		context.fillStyle = c;
 		context.fill();
-		console.log("circle");
  }
- 
-  function makeShapeTwo(x, y, r, r2, c) {
-		context.beginPath();
-		context.rect(x, y, r, r2);
-		context.fillStyle = c;
-		context.fill();
-		console.log("square");
- }
- 
- function trackKeys(codes) {
-  var pressed = Object.create(null);
-
-  // alters the current "pressed" array which is returned from this function. 
-  // The "pressed" variable persists even after this function terminates
-  // That is why we needed to assign it using "Object.create()" as 
-  // otherwise it would be garbage collected
-
-  function handler(event) {
-    if (codes.hasOwnProperty(event.keyCode)) {
-      // If the event is keydown, set down to true. Else set to false.
-      var down = event.type == "keydown";
-      pressed[codes[event.keyCode]] = down;
-      // We don't want the key press to scroll the browser window, 
-      // This stops the event from continuing to be processed
-      event.preventDefault();
-    }
-  }
-  addEventListener("keydown", handler);
-  addEventListener("keyup", handler);
-  return pressed;
-}
- 
+  
  function clearScreen(color) {
 	 //clears the screen and fills with the color of choice
 	 context.clearRect(0, 0, canvas.width, canvas.height);
@@ -192,11 +181,13 @@ canvas {
 	 timer = setInterval(moveParticles, 32);
 	 canvas.addEventListener("mousedown", getStartPosition, false);
 	 canvas.addEventListener("mouseup", getEndPosition, false);
+	 canvas.addEventListener("mousemove", getMidPosition, false);
  }
 </script>
 </head>
 <body>
 	<canvas id="canvas" width="1200" height="700"></canvas>
-	Click, drag, and release to shoot fire.
+	Click, drag, and release to throw a ball.<br>
+	Pick ball color: <input type="text" id="ballColor" value="red">
 </body>
 </html>
